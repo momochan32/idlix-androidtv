@@ -28,11 +28,9 @@ data class DetailUiState(
     val watchHistoryItem: WatchHistoryItem? = null
 )
 
-class DetailViewModel(
-    app: Application,
-    private val repository: IdlixRepository = IdlixRepository()
-) : AndroidViewModel(app) {
+class DetailViewModel(app: Application) : AndroidViewModel(app) {
 
+    private val repository = IdlixRepository()
     private val watchlistStore = WatchlistStore.getInstance(app)
     private val historyStore = WatchHistoryStore.getInstance(app)
 
