@@ -27,6 +27,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -153,6 +156,23 @@ fun PlayerScreen(
     val playButtonFocusRequester = remember { FocusRequester() }
 
     var activePlayer: ExoPlayer? by remember { mutableStateOf(null) }
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    // Pause when TV screen turns off / app goes to background, resume when it comes back
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_STOP -> activePlayer?.pause()
+                Lifecycle.Event.ON_START -> {
+                    // Only resume if player was playing before (playWhenReady tracks this)
+                    if (activePlayer?.playWhenReady == true) activePlayer?.play()
+                }
+                else -> {}
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
 
     LaunchedEffect(contentType, contentId) {
         viewModel.loadStream(
