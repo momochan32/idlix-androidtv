@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Movie
@@ -59,6 +60,7 @@ enum class NavItem(val labelRes: Int, val icon: ImageVector) {
     HOME(R.string.home, Icons.Default.Home),
     SEARCH(R.string.search, Icons.Default.Search),
     CONTINUE_WATCHING(R.string.continue_watching, Icons.Default.History),
+    WATCHLIST(R.string.watchlist, Icons.Default.Bookmark),
     MOVIES(R.string.movies, Icons.Default.Movie),
     SERIES(R.string.series, Icons.Default.Tv),
     SETTINGS(R.string.settings, Icons.Default.Settings)

@@ -17,6 +17,10 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Bookmark
+import androidx.compose.material.icons.filled.BookmarkRemove
+import androidx.compose.material.icons.filled.FastForward
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.runtime.Composable
@@ -204,58 +208,125 @@ fun DetailScreen(
 
                             Spacer(modifier = Modifier.height(14.dp))
 
-                            // Play Button with default focus and clear white outline ring
-                            Button(
-                                onClick = {
-                                    if (contentType == "movie") {
-                                        uiState.movie?.let {
-                                            onNavigateToPlayer("movie", it.id, it.title, it.fullPosterUrl, it.fullBackdropUrl, it.slug, null, null)
-                                        }
-                                    } else {
-                                        val firstEp = uiState.episodes.firstOrNull()
-                                            ?: uiState.series?.defaultSeason?.episodes?.firstOrNull()
-                                        if (firstEp != null) {
-                                            onNavigateToPlayer(
-                                                "episode",
-                                                firstEp.id,
-                                                "${uiState.series?.title} - ${firstEp.name}",
-                                                firstEp.fullStillUrl,
-                                                uiState.series?.fullBackdropUrl,
-                                                uiState.series?.slug,
-                                                uiState.selectedSeason?.seasonNumber ?: 1,
-                                                firstEp.episodeNumber
-                                            )
-                                        }
+                            // Progress bar if there is watch history
+                            val historyItem = uiState.watchHistoryItem
+                            if (historyItem != null && historyItem.progressFraction > 0f) {
+                                Column(modifier = Modifier.width(320.dp)) {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(3.dp)
+                                            .background(Color(0xFF444444), RoundedCornerShape(2.dp))
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxWidth(historyItem.progressFraction)
+                                                .fillMaxSize()
+                                                .background(NetflixRed, RoundedCornerShape(2.dp))
+                                        )
                                     }
-                                },
-                                colors = ButtonDefaults.colors(
-                                    containerColor = NetflixRed,
-                                    contentColor = NetflixWhite,
-                                    focusedContainerColor = NetflixRed,
-                                    focusedContentColor = NetflixWhite
-                                ),
-                                scale = ButtonDefaults.scale(focusedScale = 1.08f),
-                                border = ButtonDefaults.border(
-                                    focusedBorder = Border(
-                                        border = BorderStroke(2.dp, NetflixWhite)
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text(
+                                        text = stringResource(R.string.remaining_minutes, historyItem.remainingMinutes),
+                                        color = NetflixLightGray,
+                                        fontSize = 11.sp
                                     )
-                                ),
-                                shape = ButtonDefaults.shape(shape = RoundedCornerShape(6.dp)),
-                                modifier = Modifier.focusRequester(playButtonFocusRequester)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.PlayArrow,
-                                    contentDescription = stringResource(R.string.play)
-                                )
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text(
-                                    text = if (contentType == "movie") {
-                                        stringResource(R.string.play_now)
-                                    } else {
-                                        stringResource(R.string.play_episode_1)
+                                }
+                                Spacer(modifier = Modifier.height(10.dp))
+                            }
+
+                            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                // Play / Resume button
+                                Button(
+                                    onClick = {
+                                        if (contentType == "movie") {
+                                            uiState.movie?.let {
+                                                onNavigateToPlayer("movie", it.id, it.title, it.fullPosterUrl, it.fullBackdropUrl, it.slug, null, null)
+                                            }
+                                        } else {
+                                            val firstEp = uiState.episodes.firstOrNull()
+                                                ?: uiState.series?.defaultSeason?.episodes?.firstOrNull()
+                                            if (firstEp != null) {
+                                                onNavigateToPlayer(
+                                                    "episode",
+                                                    firstEp.id,
+                                                    "${uiState.series?.title} - ${firstEp.name}",
+                                                    firstEp.fullStillUrl,
+                                                    uiState.series?.fullBackdropUrl,
+                                                    uiState.series?.slug,
+                                                    uiState.selectedSeason?.seasonNumber ?: 1,
+                                                    firstEp.episodeNumber
+                                                )
+                                            }
+                                        }
                                     },
-                                    fontWeight = FontWeight.Bold
-                                )
+                                    colors = ButtonDefaults.colors(
+                                        containerColor = NetflixRed,
+                                        contentColor = NetflixWhite,
+                                        focusedContainerColor = NetflixRed,
+                                        focusedContentColor = NetflixWhite
+                                    ),
+                                    scale = ButtonDefaults.scale(focusedScale = 1.08f),
+                                    border = ButtonDefaults.border(
+                                        focusedBorder = Border(border = BorderStroke(2.dp, NetflixWhite))
+                                    ),
+                                    shape = ButtonDefaults.shape(shape = RoundedCornerShape(6.dp)),
+                                    modifier = Modifier.focusRequester(playButtonFocusRequester)
+                                ) {
+                                    Icon(
+                                        imageVector = if (historyItem != null && historyItem.progressFraction > 0f)
+                                            Icons.Default.FastForward else Icons.Default.PlayArrow,
+                                        contentDescription = stringResource(R.string.play)
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(
+                                        text = when {
+                                            historyItem != null && historyItem.progressFraction > 0f ->
+                                                stringResource(R.string.resume)
+                                            contentType == "movie" -> stringResource(R.string.play_now)
+                                            else -> stringResource(R.string.play_episode_1)
+                                        },
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+
+                                // Watchlist toggle button
+                                Button(
+                                    onClick = {
+                                        val movieSlug = uiState.movie?.slug ?: slug
+                                        viewModel.toggleWatchlist(
+                                            slug = movieSlug,
+                                            contentType = contentType,
+                                            title = title,
+                                            posterUrl = uiState.movie?.fullPosterUrl ?: uiState.series?.fullPosterUrl,
+                                            backdropUrl = uiState.movie?.fullBackdropUrl ?: uiState.series?.fullBackdropUrl
+                                        )
+                                    },
+                                    colors = ButtonDefaults.colors(
+                                        containerColor = NetflixDarkCard,
+                                        contentColor = NetflixWhite,
+                                        focusedContainerColor = NetflixWhite,
+                                        focusedContentColor = NetflixBlack
+                                    ),
+                                    scale = ButtonDefaults.scale(focusedScale = 1.08f),
+                                    border = ButtonDefaults.border(
+                                        focusedBorder = Border(border = BorderStroke(2.dp, NetflixWhite))
+                                    ),
+                                    shape = ButtonDefaults.shape(shape = RoundedCornerShape(6.dp))
+                                ) {
+                                    Icon(
+                                        imageVector = if (uiState.isInWatchlist) Icons.Default.BookmarkRemove else Icons.Default.Add,
+                                        contentDescription = null
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(
+                                        text = if (uiState.isInWatchlist)
+                                            stringResource(R.string.watchlist_remove_label)
+                                        else
+                                            stringResource(R.string.watchlist_add),
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
                             }
                         }
                     }

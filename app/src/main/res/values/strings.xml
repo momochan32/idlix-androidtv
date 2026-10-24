@@ -104,4 +104,15 @@
     <string name="category_titles_count">%d titles</string>
     <string name="load_more">Load More</string>
     <string name="loading_more">Loading more titles…</string>
+    <string name="watchlist">My List</string>
+    <string name="watchlist_count">%d saved titles</string>
+    <string name="watchlist_add">+ My List</string>
+    <string name="watchlist_remove_label">Remove from List</string>
+    <string name="watchlist_remove">Remove</string>
+    <string name="watchlist_empty_title">Your List Is Empty</string>
+    <string name="watchlist_empty_desc">Tap \"+ My List\" on any title to save it here.</string>
+    <string name="resume">Resume</string>
+    <string name="clear_history">Clear Watch History</string>
+    <string name="clear_history_desc">Remove all watch progress and history data.</string>
+    <string name="history_cleared">Watch history cleared.</string>
 </resources>

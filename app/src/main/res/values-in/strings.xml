@@ -104,4 +104,15 @@
     <string name="category_titles_count">%d judul</string>
     <string name="load_more">Muat Lebih Banyak</string>
     <string name="loading_more">Memuat judul lainnya…</string>
+    <string name="watchlist">Daftar Saya</string>
+    <string name="watchlist_count">%d judul tersimpan</string>
+    <string name="watchlist_add">+ Daftar Saya</string>
+    <string name="watchlist_remove_label">Hapus dari Daftar</string>
+    <string name="watchlist_remove">Hapus</string>
+    <string name="watchlist_empty_title">Daftar Anda Masih Kosong</string>
+    <string name="watchlist_empty_desc">Tekan \"+ Daftar Saya\" pada judul apapun untuk menyimpannya di sini.</string>
+    <string name="resume">Lanjutkan</string>
+    <string name="clear_history">Hapus Riwayat Tonton</string>
+    <string name="clear_history_desc">Hapus semua progress menonton dan data riwayat.</string>
+    <string name="history_cleared">Riwayat menonton berhasil dihapus.</string>
 </resources>

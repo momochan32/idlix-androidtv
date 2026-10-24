@@ -21,8 +21,10 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.filled.Dns
 import androidx.compose.material.icons.filled.Error
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Save
@@ -55,6 +57,7 @@ import androidx.tv.material3.Text
 import com.idlix.tv.BuildConfig
 import com.idlix.tv.R
 import com.idlix.tv.data.api.ApiClient
+import com.idlix.tv.data.local.WatchHistoryStore
 import com.idlix.tv.data.model.SubdlResponse
 import com.idlix.tv.data.repository.SubdlRepository
 import com.idlix.tv.ui.theme.NetflixBlack
@@ -76,6 +79,8 @@ fun SettingsScreen(
     val scope = rememberCoroutineScope()
     val keyboardController = LocalSoftwareKeyboardController.current
     val scrollState = rememberScrollState()
+    val historyStore = remember { WatchHistoryStore.getInstance(context) }
+    var historyClearMessage by remember { mutableStateOf<String?>(null) }
 
     // --- Backend API State ---
     var currentActiveUrl by remember { mutableStateOf(ApiClient.getBaseUrl()) }
@@ -506,7 +511,88 @@ fun SettingsScreen(
         }
 
         // ==========================================
-        // SECTION 3: SAVE ALL SETTINGS ACTION
+        // SECTION 3: CLEAR WATCH HISTORY
+        // ==========================================
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(NetflixDarkCard, RoundedCornerShape(10.dp))
+                .padding(18.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Default.History,
+                    contentDescription = null,
+                    tint = NetflixWhite,
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(10.dp))
+                Text(
+                    text = stringResource(R.string.clear_history),
+                    color = NetflixWhite,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            Text(
+                text = stringResource(R.string.clear_history_desc),
+                color = NetflixLightGray,
+                fontSize = 12.sp
+            )
+
+            Button(
+                onClick = {
+                    historyStore.clearAll()
+                    historyClearMessage = context.getString(R.string.history_cleared)
+                    saveMessage = null
+                },
+                colors = ButtonDefaults.colors(
+                    containerColor = NetflixRed.copy(alpha = 0.15f),
+                    focusedContainerColor = NetflixRed,
+                    contentColor = NetflixRed,
+                    focusedContentColor = NetflixWhite
+                ),
+                shape = ButtonDefaults.shape(RoundedCornerShape(6.dp)),
+                modifier = Modifier.height(38.dp)
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.DeleteSweep,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = stringResource(R.string.clear_history),
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 12.sp
+                    )
+                }
+            }
+
+            if (historyClearMessage != null) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.CheckCircle,
+                        contentDescription = null,
+                        tint = Color(0xFF4CAF50),
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = historyClearMessage ?: "",
+                        color = Color(0xFF4CAF50),
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            }
+        }
+
+        // ==========================================
+        // SECTION 4: SAVE ALL SETTINGS ACTION
         // ==========================================
         Row(
             verticalAlignment = Alignment.CenterVertically,

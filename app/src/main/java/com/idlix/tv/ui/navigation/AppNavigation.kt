@@ -20,6 +20,7 @@ import com.idlix.tv.ui.screens.player.PlayerScreen
 import com.idlix.tv.ui.screens.search.SearchScreen
 import com.idlix.tv.ui.screens.series.SeriesScreen
 import com.idlix.tv.ui.screens.settings.SettingsScreen
+import com.idlix.tv.ui.screens.watchlist.WatchlistScreen
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
 
@@ -34,6 +35,7 @@ fun AppNavigation(
     val selectedNavItem = when {
         currentRoute.startsWith("search") -> NavItem.SEARCH
         currentRoute.startsWith("continue_watching") -> NavItem.CONTINUE_WATCHING
+        currentRoute.startsWith("watchlist") -> NavItem.WATCHLIST
         currentRoute.startsWith("movies") -> NavItem.MOVIES
         currentRoute.startsWith("series") -> NavItem.SERIES
         currentRoute.startsWith("settings") -> NavItem.SETTINGS
@@ -67,6 +69,11 @@ fun AppNavigation(
                         restoreState = true
                     }
                     NavItem.CONTINUE_WATCHING -> navController.navigate(Screen.ContinueWatching.route) {
+                        popUpTo(Screen.Home.route)
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                    NavItem.WATCHLIST -> navController.navigate(Screen.Watchlist.route) {
                         popUpTo(Screen.Home.route)
                         launchSingleTop = true
                         restoreState = true
@@ -160,6 +167,14 @@ private fun androidx.navigation.NavGraphBuilder.setupNavRoutes(
 
     composable(Screen.Search.route) {
         SearchScreen(
+            onNavigateToDetail = { type, slug ->
+                navController.navigate(Screen.Detail.createRoute(type, slug))
+            }
+        )
+    }
+
+    composable(Screen.Watchlist.route) {
+        WatchlistScreen(
             onNavigateToDetail = { type, slug ->
                 navController.navigate(Screen.Detail.createRoute(type, slug))
             }
