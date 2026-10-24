@@ -53,4 +53,28 @@ class SearchViewModel(
             }
         }
     }
+
+    fun searchNow() {
+        val currentQuery = _uiState.value.query.trim()
+        if (currentQuery.isBlank()) return
+        if (!_uiState.value.isLoading && _uiState.value.results.isNotEmpty() && searchJob?.isActive != true) {
+            return
+        }
+        searchJob?.cancel()
+        searchJob = viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+            try {
+                val results = repository.search(currentQuery)
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    results = results
+                )
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    error = e.localizedMessage ?: "Pencarian gagal"
+                )
+            }
+        }
+    }
 }

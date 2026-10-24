@@ -9,7 +9,6 @@ import com.idlix.tv.data.model.SeriesItem
 import com.idlix.tv.data.model.WatchHistoryItem
 import com.idlix.tv.data.repository.IdlixRepository
 import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -21,8 +20,15 @@ data class HomeUiState(
     val continueWatching: List<WatchHistoryItem> = emptyList(),
     val trending: List<MovieItem> = emptyList(),
     val popularMovies: List<MovieItem> = emptyList(),
+    val latestMovies: List<MovieItem> = emptyList(),
     val popularSeries: List<SeriesItem> = emptyList(),
+    val latestSeries: List<SeriesItem> = emptyList(),
     val actionMovies: List<MovieItem> = emptyList(),
+    val comedyMovies: List<MovieItem> = emptyList(),
+    val horrorMovies: List<MovieItem> = emptyList(),
+    val animationMovies: List<MovieItem> = emptyList(),
+    val sciFiMovies: List<MovieItem> = emptyList(),
+    val romanceMovies: List<MovieItem> = emptyList(),
     val error: String? = null
 )
 
@@ -51,34 +57,61 @@ class HomeViewModel(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
             try {
-                coroutineScope {
-                    val trendingDeferred = async { repository.getTrendingMovies() }
-                    val popularDeferred = async { repository.getPopularMovies() }
-                    val seriesDeferred = async { repository.getPopularSeries() }
-                    val actionDeferred = async { repository.getMoviesByGenre("action") }
+                // Phase 1: Load essential top-of-screen content first for instantaneous display
+                val trendingDeferred = async { repository.getTrendingMovies() }
+                val popularDeferred = async { repository.getPopularMovies() }
+                val seriesDeferred = async { repository.getPopularSeries() }
+                val unfinished = historyStore.getUnfinishedItems()
 
-                    val trending = trendingDeferred.await()
-                    val popular = popularDeferred.await()
-                    val series = seriesDeferred.await()
-                    val action = actionDeferred.await()
-                    val unfinished = historyStore.getUnfinishedItems()
+                val trending = trendingDeferred.await()
+                val popular = popularDeferred.await()
+                val series = seriesDeferred.await()
+                val hero = trending.firstOrNull() ?: popular.firstOrNull()
 
-                    val hero = trending.firstOrNull() ?: popular.firstOrNull()
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    heroMovie = hero,
+                    continueWatching = unfinished,
+                    trending = trending,
+                    popularMovies = popular,
+                    popularSeries = series
+                )
 
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        heroMovie = hero,
-                        continueWatching = unfinished,
-                        trending = trending,
-                        popularMovies = popular,
-                        popularSeries = series,
-                        actionMovies = action
-                    )
-                }
+                // Phase 2: Concurrently fetch expanded genres and categories to enrich Home
+                val latestMoviesDef = async { repository.getMoviesBySort("createdAt") }
+                val latestSeriesDef = async { repository.getSeriesBySort("createdAt") }
+                val actionDef = async { repository.getMoviesByGenre("action") }
+                val comedyDef = async { repository.getMoviesByGenre("comedy") }
+                val horrorDef = async { repository.getMoviesByGenre("horror") }
+                val animationDef = async { repository.getMoviesByGenre("animation") }
+                val sciFiDef = async { repository.getMoviesByGenre("science-fiction") }
+                val romanceDef = async { repository.getMoviesByGenre("romance") }
+
+                val latestMovies = latestMoviesDef.await()
+                val latestSeries = latestSeriesDef.await()
+                val action = actionDef.await()
+                val comedy = comedyDef.await()
+                val horror = horrorDef.await()
+                val animation = animationDef.await()
+                val sciFi = sciFiDef.await()
+                val romance = romanceDef.await()
+
+                _uiState.value = _uiState.value.copy(
+                    latestMovies = latestMovies,
+                    latestSeries = latestSeries,
+                    actionMovies = action,
+                    comedyMovies = comedy,
+                    horrorMovies = horror,
+                    animationMovies = animation,
+                    sciFiMovies = sciFi,
+                    romanceMovies = romance
+                )
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    error = e.localizedMessage ?: "Terjadi kesalahan saat memuat data"
+                    error = if (_uiState.value.trending.isEmpty() && _uiState.value.popularMovies.isEmpty()) {
+                        e.localizedMessage ?: "Terjadi kesalahan saat memuat data"
+                    } else null
                 )
             }
         }

@@ -16,6 +16,19 @@ sealed class Screen(val route: String) {
             "detail/$contentType/$slug"
     }
 
+    object Category : Screen("category/{title}/{contentType}/{filterType}/{filterValue}") {
+        fun createRoute(
+            title: String,
+            contentType: String,
+            filterType: String,
+            filterValue: String
+        ): String {
+            val encodedTitle = URLEncoder.encode(title, StandardCharsets.UTF_8.toString())
+            val encodedValue = URLEncoder.encode(if (filterValue.isBlank()) "all" else filterValue, StandardCharsets.UTF_8.toString())
+            return "category/$encodedTitle/$contentType/$filterType/$encodedValue"
+        }
+    }
+
     object Player : Screen("player/{contentType}/{contentId}/{title}?poster={poster}&backdrop={backdrop}&slug={slug}&season={season}&episode={episode}") {
         fun createRoute(
             contentType: String,

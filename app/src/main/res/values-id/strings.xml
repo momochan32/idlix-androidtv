@@ -96,4 +96,12 @@
     <string name="play_next_episode">Putar Sekarang</string>
     <string name="next_episode_in_seconds">Putar otomatis dalam %ds</string>
     <string name="dismiss">Tutup</string>
+    <string name="see_more">Selengkapnya</string>
+    <string name="see_all">Lihat Semua</string>
+    <string name="movies_animation">Film Animasi &amp; Anime Seru</string>
+    <string name="movies_romance">Film Romantis &amp; Drama</string>
+    <string name="latest_series">Serial TV Baru Rilis</string>
+    <string name="category_titles_count">%d judul</string>
+    <string name="load_more">Muat Lebih Banyak</string>
+    <string name="loading_more">Memuat judul lainnya…</string>
 </resources>

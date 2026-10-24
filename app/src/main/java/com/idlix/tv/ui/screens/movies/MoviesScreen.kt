@@ -25,6 +25,7 @@ import com.idlix.tv.ui.theme.NetflixWhite
 fun MoviesScreen(
     onNavigateToDetail: (contentType: String, slug: String) -> Unit,
     onNavigateToPlayer: (contentType: String, contentId: String, title: String, poster: String?, backdrop: String?, slug: String?) -> Unit,
+    onNavigateToCategory: ((title: String, contentType: String, filterType: String, filterValue: String) -> Unit)? = null,
     modifier: Modifier = Modifier,
     viewModel: MoviesViewModel = viewModel()
 ) {
@@ -69,57 +70,93 @@ fun MoviesScreen(
                 }
 
                 // Swimlane: Film Terpopuler
-                item {
-                    TvSwimlaneRow(
-                        title = stringResource(R.string.popular_movies_indonesia),
-                        items = uiState.popularMovies,
-                        onItemClick = { onNavigateToDetail(it.contentType, it.slug) }
-                    )
+                if (uiState.popularMovies.isNotEmpty()) {
+                    item {
+                        val title = stringResource(R.string.popular_movies_indonesia)
+                        TvSwimlaneRow(
+                            title = title,
+                            items = uiState.popularMovies,
+                            onSeeMoreClick = onNavigateToCategory?.let { nav ->
+                                { nav(title, "movie", "sort", "") }
+                            },
+                            onItemClick = { onNavigateToDetail(it.contentType, it.slug) }
+                        )
+                    }
                 }
 
                 // Swimlane: Film Terbaru
-                item {
-                    TvSwimlaneRow(
-                        title = stringResource(R.string.latest_movies),
-                        items = uiState.latestMovies,
-                        onItemClick = { onNavigateToDetail(it.contentType, it.slug) }
-                    )
+                if (uiState.latestMovies.isNotEmpty()) {
+                    item {
+                        val title = stringResource(R.string.latest_movies)
+                        TvSwimlaneRow(
+                            title = title,
+                            items = uiState.latestMovies,
+                            onSeeMoreClick = onNavigateToCategory?.let { nav ->
+                                { nav(title, "movie", "sort", "createdAt") }
+                            },
+                            onItemClick = { onNavigateToDetail(it.contentType, it.slug) }
+                        )
+                    }
                 }
 
                 // Swimlane: Film Aksi
-                item {
-                    TvSwimlaneRow(
-                        title = stringResource(R.string.movies_action),
-                        items = uiState.actionMovies,
-                        onItemClick = { onNavigateToDetail(it.contentType, it.slug) }
-                    )
+                if (uiState.actionMovies.isNotEmpty()) {
+                    item {
+                        val title = stringResource(R.string.movies_action)
+                        TvSwimlaneRow(
+                            title = title,
+                            items = uiState.actionMovies,
+                            onSeeMoreClick = onNavigateToCategory?.let { nav ->
+                                { nav(title, "movie", "genre", "action") }
+                            },
+                            onItemClick = { onNavigateToDetail(it.contentType, it.slug) }
+                        )
+                    }
                 }
 
                 // Swimlane: Film Komedi
-                item {
-                    TvSwimlaneRow(
-                        title = stringResource(R.string.movies_comedy),
-                        items = uiState.comedyMovies,
-                        onItemClick = { onNavigateToDetail(it.contentType, it.slug) }
-                    )
+                if (uiState.comedyMovies.isNotEmpty()) {
+                    item {
+                        val title = stringResource(R.string.movies_comedy)
+                        TvSwimlaneRow(
+                            title = title,
+                            items = uiState.comedyMovies,
+                            onSeeMoreClick = onNavigateToCategory?.let { nav ->
+                                { nav(title, "movie", "genre", "comedy") }
+                            },
+                            onItemClick = { onNavigateToDetail(it.contentType, it.slug) }
+                        )
+                    }
                 }
 
                 // Swimlane: Film Horor
-                item {
-                    TvSwimlaneRow(
-                        title = stringResource(R.string.movies_horror),
-                        items = uiState.horrorMovies,
-                        onItemClick = { onNavigateToDetail(it.contentType, it.slug) }
-                    )
+                if (uiState.horrorMovies.isNotEmpty()) {
+                    item {
+                        val title = stringResource(R.string.movies_horror)
+                        TvSwimlaneRow(
+                            title = title,
+                            items = uiState.horrorMovies,
+                            onSeeMoreClick = onNavigateToCategory?.let { nav ->
+                                { nav(title, "movie", "genre", "horror") }
+                            },
+                            onItemClick = { onNavigateToDetail(it.contentType, it.slug) }
+                        )
+                    }
                 }
 
                 // Swimlane: Film Fiksi Ilmiah (Sci-Fi)
-                item {
-                    TvSwimlaneRow(
-                        title = stringResource(R.string.movies_scifi),
-                        items = uiState.sciFiMovies,
-                        onItemClick = { onNavigateToDetail(it.contentType, it.slug) }
-                    )
+                if (uiState.sciFiMovies.isNotEmpty()) {
+                    item {
+                        val title = stringResource(R.string.movies_scifi)
+                        TvSwimlaneRow(
+                            title = title,
+                            items = uiState.sciFiMovies,
+                            onSeeMoreClick = onNavigateToCategory?.let { nav ->
+                                { nav(title, "movie", "genre", "science-fiction") }
+                            },
+                            onItemClick = { onNavigateToDetail(it.contentType, it.slug) }
+                        )
+                    }
                 }
             }
         }

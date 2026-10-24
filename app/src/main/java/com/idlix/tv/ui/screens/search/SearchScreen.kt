@@ -1,5 +1,6 @@
 package com.idlix.tv.ui.screens.search
 
+import android.view.KeyEvent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -21,6 +22,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -28,8 +30,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
@@ -40,7 +47,6 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.tv.foundation.lazy.grid.TvGridCells
 import androidx.tv.foundation.lazy.grid.TvLazyVerticalGrid
-import androidx.tv.foundation.lazy.grid.items
 import androidx.tv.foundation.lazy.list.TvLazyRow
 import androidx.tv.foundation.lazy.list.items
 import androidx.tv.material3.Button
@@ -56,6 +62,7 @@ import com.idlix.tv.ui.theme.NetflixDarkCard
 import com.idlix.tv.ui.theme.NetflixLightGray
 import com.idlix.tv.ui.theme.NetflixRed
 import com.idlix.tv.ui.theme.NetflixWhite
+import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
@@ -66,9 +73,37 @@ fun SearchScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val keyboardController = LocalSoftwareKeyboardController.current
+    val focusManager = LocalFocusManager.current
+    val firstResultFocusRequester = remember { FocusRequester() }
     var isInputFocused by remember { mutableStateOf(false) }
+    var pendingFocusOnResults by remember { mutableStateOf(false) }
 
     val quickSearches = listOf("Batman", "Spider-Man", "Action", "Korea", "Horror", "Comedy", "Anime", "Romance")
+
+    val submitSearch = {
+        keyboardController?.hide()
+        viewModel.searchNow()
+        pendingFocusOnResults = true
+        if (uiState.results.isNotEmpty()) {
+            try {
+                firstResultFocusRequester.requestFocus()
+            } catch (_: Exception) {}
+        }
+    }
+
+    LaunchedEffect(pendingFocusOnResults, uiState.isLoading, uiState.results) {
+        if (pendingFocusOnResults && !uiState.isLoading) {
+            if (uiState.results.isNotEmpty()) {
+                delay(100)
+                try {
+                    firstResultFocusRequester.requestFocus()
+                } catch (_: Exception) {}
+            } else {
+                focusManager.clearFocus()
+            }
+            pendingFocusOnResults = false
+        }
+    }
 
     Column(
         modifier = modifier
@@ -110,13 +145,50 @@ fun SearchScreen(
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                 keyboardActions = KeyboardActions(
                     onSearch = {
-                        keyboardController?.hide()
+                        submitSearch()
                     }
                 ),
                 singleLine = true,
                 modifier = Modifier
                     .weight(1f)
-                    .onFocusChanged { isInputFocused = it.isFocused },
+                    .onFocusChanged { isInputFocused = it.isFocused }
+                    .onPreviewKeyEvent { keyEvent ->
+                        if (keyEvent.nativeKeyEvent.action == KeyEvent.ACTION_DOWN) {
+                            when (keyEvent.nativeKeyEvent.keyCode) {
+                                KeyEvent.KEYCODE_DPAD_DOWN -> {
+                                    keyboardController?.hide()
+                                    if (uiState.results.isNotEmpty()) {
+                                        try {
+                                            firstResultFocusRequester.requestFocus()
+                                            true
+                                        } catch (_: Exception) {
+                                            focusManager.moveFocus(FocusDirection.Down)
+                                        }
+                                    } else {
+                                        focusManager.moveFocus(FocusDirection.Down)
+                                    }
+                                }
+                                KeyEvent.KEYCODE_ENTER,
+                                KeyEvent.KEYCODE_NUMPAD_ENTER,
+                                KeyEvent.KEYCODE_SEARCH -> {
+                                    submitSearch()
+                                    true
+                                }
+                                KeyEvent.KEYCODE_BACK -> {
+                                    if (isInputFocused) {
+                                        keyboardController?.hide()
+                                        focusManager.clearFocus()
+                                        true
+                                    } else {
+                                        false
+                                    }
+                                }
+                                else -> false
+                            }
+                        } else {
+                            false
+                        }
+                    },
                 decorationBox = { innerTextField ->
                     if (uiState.query.isEmpty()) {
                         Text(
@@ -131,7 +203,10 @@ fun SearchScreen(
 
             if (uiState.query.isNotEmpty()) {
                 Button(
-                    onClick = { viewModel.onQueryChange("") },
+                    onClick = {
+                        viewModel.onQueryChange("")
+                        pendingFocusOnResults = false
+                    },
                     colors = ButtonDefaults.colors(
                         containerColor = NetflixBlack,
                         contentColor = NetflixLightGray,
@@ -163,7 +238,10 @@ fun SearchScreen(
             ) {
                 items(quickSearches) { tag ->
                     Button(
-                        onClick = { viewModel.onQueryChange(tag) },
+                        onClick = {
+                            viewModel.onQueryChange(tag)
+                            pendingFocusOnResults = true
+                        },
                         colors = ButtonDefaults.colors(
                             containerColor = NetflixDarkCard,
                             contentColor = NetflixLightGray,
@@ -206,12 +284,17 @@ fun SearchScreen(
                     horizontalArrangement = Arrangement.spacedBy(14.dp),
                     modifier = Modifier.fillMaxSize()
                 ) {
-                    items(uiState.results, key = { it.id }) { item ->
+                    items(
+                        count = uiState.results.size,
+                        key = { index -> uiState.results[index].id }
+                    ) { index ->
+                        val item = uiState.results[index]
                         TvMovieCard(
                             title = item.title,
                             posterUrl = item.fullPosterUrl,
                             rating = item.formattedRating,
                             quality = item.quality ?: if (item.contentType == "tv_series") "SERIES" else "MOVIE",
+                            modifier = if (index == 0) Modifier.focusRequester(firstResultFocusRequester) else Modifier,
                             onClick = { onNavigateToDetail(item.contentType, item.slug) }
                         )
                     }

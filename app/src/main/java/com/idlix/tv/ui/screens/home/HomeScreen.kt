@@ -19,7 +19,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.tv.material3.Text
 import com.idlix.tv.R
-import com.idlix.tv.data.model.MovieItem
 import com.idlix.tv.ui.components.TvContinueWatchingRow
 import com.idlix.tv.ui.components.TvHeroBillboard
 import com.idlix.tv.ui.components.TvLoadingSpinner
@@ -31,6 +30,7 @@ import com.idlix.tv.ui.theme.NetflixWhite
 fun HomeScreen(
     onNavigateToDetail: (contentType: String, slug: String) -> Unit,
     onNavigateToPlayer: (contentType: String, contentId: String, title: String, poster: String?, backdrop: String?, slug: String?) -> Unit,
+    onNavigateToCategory: (title: String, contentType: String, filterType: String, filterValue: String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = viewModel()
 ) {
@@ -60,7 +60,7 @@ fun HomeScreen(
             TvLoadingSpinner(
                 modifier = Modifier.align(Alignment.Center)
             )
-        } else if (uiState.error != null) {
+        } else if (uiState.error != null && uiState.heroMovie == null) {
             Text(
                 text = uiState.error ?: "",
                 color = NetflixWhite,
@@ -101,7 +101,7 @@ fun HomeScreen(
                     )
                 }
 
-                // 2. Bar Paling Pertama: Lanjutkan Menonton (hanya muncul jika ada histori yang belum kelar)
+                // 2. Bar Paling Pertama: Lanjutkan Menonton
                 if (uiState.continueWatching.isNotEmpty()) {
                     item {
                         TvContinueWatchingRow(
@@ -122,51 +122,171 @@ fun HomeScreen(
                 }
 
                 // 3. Swimlane: Sedang Tren Sekarang
-                item {
-                    TvSwimlaneRow(
-                        title = stringResource(R.string.trending_now),
-                        items = uiState.trending,
-                        onItemClick = { onNavigateToDetail(it.contentType, it.slug) }
-                    )
+                if (uiState.trending.isNotEmpty()) {
+                    item {
+                        val title = stringResource(R.string.trending_now)
+                        TvSwimlaneRow(
+                            title = title,
+                            items = uiState.trending,
+                            onSeeMoreClick = {
+                                onNavigateToCategory(title, "movie", "sort", "popularity")
+                            },
+                            onItemClick = { onNavigateToDetail(it.contentType, it.slug) }
+                        )
+                    }
                 }
 
                 // 4. Swimlane: Film Terpopuler
-                item {
-                    TvSwimlaneRow(
-                        title = stringResource(R.string.top_10_movies),
-                        items = uiState.popularMovies,
-                        onItemClick = { onNavigateToDetail(it.contentType, it.slug) }
-                    )
-                }
-
-                // 5. Swimlane: Serial TV Pilihan
-                item {
-                    val seriesAsMovies = remember(uiState.popularSeries) {
-                        uiState.popularSeries.map { s ->
-                            MovieItem(
-                                id = s.id,
-                                title = s.title,
-                                slug = s.slug,
-                                posterPath = s.posterPath,
-                                backdropPath = s.backdropPath,
-                                voteAverage = s.voteAverage,
-                                contentType = "tv_series"
-                            )
-                        }
+                if (uiState.popularMovies.isNotEmpty()) {
+                    item {
+                        val title = stringResource(R.string.top_10_movies)
+                        TvSwimlaneRow(
+                            title = title,
+                            items = uiState.popularMovies,
+                            onSeeMoreClick = {
+                                onNavigateToCategory(title, "movie", "sort", "")
+                            },
+                            onItemClick = { onNavigateToDetail(it.contentType, it.slug) }
+                        )
                     }
-                    TvSwimlaneRow(
-                        title = stringResource(R.string.popular_series),
-                        items = seriesAsMovies,
-                        onItemClick = { onNavigateToDetail(it.contentType, it.slug) }
-                    )
                 }
 
-                // 6. Swimlane: Film Aksi
+                // 5. Swimlane: Film Baru Rilis
+                if (uiState.latestMovies.isNotEmpty()) {
+                    item {
+                        val title = stringResource(R.string.latest_movies)
+                        TvSwimlaneRow(
+                            title = title,
+                            items = uiState.latestMovies,
+                            onSeeMoreClick = {
+                                onNavigateToCategory(title, "movie", "sort", "createdAt")
+                            },
+                            onItemClick = { onNavigateToDetail(it.contentType, it.slug) }
+                        )
+                    }
+                }
+
+                // 6. Swimlane: Serial TV Pilihan
+                if (uiState.popularSeries.isNotEmpty()) {
+                    item {
+                        val title = stringResource(R.string.popular_series)
+                        val seriesAsMovies = remember(uiState.popularSeries) {
+                            uiState.popularSeries.map { it.toMovieItem() }
+                        }
+                        TvSwimlaneRow(
+                            title = title,
+                            items = seriesAsMovies,
+                            onSeeMoreClick = {
+                                onNavigateToCategory(title, "tv_series", "sort", "popularity")
+                            },
+                            onItemClick = { onNavigateToDetail(it.contentType, it.slug) }
+                        )
+                    }
+                }
+
+                // 7. Swimlane: Serial TV Baru Rilis
+                if (uiState.latestSeries.isNotEmpty()) {
+                    item {
+                        val title = stringResource(R.string.latest_series)
+                        val latestSeriesAsMovies = remember(uiState.latestSeries) {
+                            uiState.latestSeries.map { it.toMovieItem() }
+                        }
+                        TvSwimlaneRow(
+                            title = title,
+                            items = latestSeriesAsMovies,
+                            onSeeMoreClick = {
+                                onNavigateToCategory(title, "tv_series", "sort", "createdAt")
+                            },
+                            onItemClick = { onNavigateToDetail(it.contentType, it.slug) }
+                        )
+                    }
+                }
+
+                // 8. Swimlane: Film Aksi & Petualangan
                 if (uiState.actionMovies.isNotEmpty()) {
                     item {
+                        val title = stringResource(R.string.movies_action)
                         TvSwimlaneRow(
-                            title = stringResource(R.string.movies_action),
+                            title = title,
                             items = uiState.actionMovies,
+                            onSeeMoreClick = {
+                                onNavigateToCategory(title, "movie", "genre", "action")
+                            },
+                            onItemClick = { onNavigateToDetail(it.contentType, it.slug) }
+                        )
+                    }
+                }
+
+                // 9. Swimlane: Film Horor & Misteri
+                if (uiState.horrorMovies.isNotEmpty()) {
+                    item {
+                        val title = stringResource(R.string.movies_horror)
+                        TvSwimlaneRow(
+                            title = title,
+                            items = uiState.horrorMovies,
+                            onSeeMoreClick = {
+                                onNavigateToCategory(title, "movie", "genre", "horror")
+                            },
+                            onItemClick = { onNavigateToDetail(it.contentType, it.slug) }
+                        )
+                    }
+                }
+
+                // 10. Swimlane: Film Komedi Seru
+                if (uiState.comedyMovies.isNotEmpty()) {
+                    item {
+                        val title = stringResource(R.string.movies_comedy)
+                        TvSwimlaneRow(
+                            title = title,
+                            items = uiState.comedyMovies,
+                            onSeeMoreClick = {
+                                onNavigateToCategory(title, "movie", "genre", "comedy")
+                            },
+                            onItemClick = { onNavigateToDetail(it.contentType, it.slug) }
+                        )
+                    }
+                }
+
+                // 11. Swimlane: Film Animasi & Anime
+                if (uiState.animationMovies.isNotEmpty()) {
+                    item {
+                        val title = stringResource(R.string.movies_animation)
+                        TvSwimlaneRow(
+                            title = title,
+                            items = uiState.animationMovies,
+                            onSeeMoreClick = {
+                                onNavigateToCategory(title, "movie", "genre", "animation")
+                            },
+                            onItemClick = { onNavigateToDetail(it.contentType, it.slug) }
+                        )
+                    }
+                }
+
+                // 12. Swimlane: Film Fiksi Ilmiah & Fantasi
+                if (uiState.sciFiMovies.isNotEmpty()) {
+                    item {
+                        val title = stringResource(R.string.movies_scifi)
+                        TvSwimlaneRow(
+                            title = title,
+                            items = uiState.sciFiMovies,
+                            onSeeMoreClick = {
+                                onNavigateToCategory(title, "movie", "genre", "science-fiction")
+                            },
+                            onItemClick = { onNavigateToDetail(it.contentType, it.slug) }
+                        )
+                    }
+                }
+
+                // 13. Swimlane: Film Romantis & Drama
+                if (uiState.romanceMovies.isNotEmpty()) {
+                    item {
+                        val title = stringResource(R.string.movies_romance)
+                        TvSwimlaneRow(
+                            title = title,
+                            items = uiState.romanceMovies,
+                            onSeeMoreClick = {
+                                onNavigateToCategory(title, "movie", "genre", "romance")
+                            },
                             onItemClick = { onNavigateToDetail(it.contentType, it.slug) }
                         )
                     }

@@ -29,6 +29,32 @@ class IdlixRepository(
     private val majorplayApi: MajorplayApiService = ApiClient.majorplayApi
 ) {
 
+    suspend fun getMoviesPaginated(
+        page: Int = 1,
+        limit: Int = 24,
+        sort: String? = null,
+        genre: String? = null
+    ): List<MovieItem> = withContext(Dispatchers.IO) {
+        try {
+            idlixApi.getMovies(page = page, limit = limit, sort = sort, genre = genre).data
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+
+    suspend fun getSeriesPaginated(
+        page: Int = 1,
+        limit: Int = 24,
+        sort: String? = null,
+        genre: String? = null
+    ): List<SeriesItem> = withContext(Dispatchers.IO) {
+        try {
+            idlixApi.getSeries(page = page, limit = limit, sort = sort, genre = genre).data
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+
     suspend fun getTrendingMovies(): List<MovieItem> = withContext(Dispatchers.IO) {
         try {
             idlixApi.getMovies(page = 1, limit = 20, sort = "popularity").data

@@ -25,6 +25,7 @@ import com.idlix.tv.ui.theme.NetflixWhite
 fun SeriesScreen(
     onNavigateToDetail: (contentType: String, slug: String) -> Unit,
     onNavigateToPlayer: (contentType: String, contentId: String, title: String, poster: String?, backdrop: String?, slug: String?) -> Unit,
+    onNavigateToCategory: ((title: String, contentType: String, filterType: String, filterValue: String) -> Unit)? = null,
     modifier: Modifier = Modifier,
     viewModel: SeriesViewModel = viewModel()
 ) {
@@ -69,48 +70,78 @@ fun SeriesScreen(
                 }
 
                 // Swimlane: Serial TV Terpopuler
-                item {
-                    TvSwimlaneRow(
-                        title = stringResource(R.string.popular_series),
-                        items = uiState.popularSeries,
-                        onItemClick = { onNavigateToDetail(it.contentType, it.slug) }
-                    )
+                if (uiState.popularSeries.isNotEmpty()) {
+                    item {
+                        val title = stringResource(R.string.popular_series)
+                        TvSwimlaneRow(
+                            title = title,
+                            items = uiState.popularSeries,
+                            onSeeMoreClick = onNavigateToCategory?.let { nav ->
+                                { nav(title, "tv_series", "sort", "popularity") }
+                            },
+                            onItemClick = { onNavigateToDetail(it.contentType, it.slug) }
+                        )
+                    }
                 }
 
                 // Swimlane: Serial TV Terbaru
-                item {
-                    TvSwimlaneRow(
-                        title = stringResource(R.string.on_the_air_series),
-                        items = uiState.latestSeries,
-                        onItemClick = { onNavigateToDetail(it.contentType, it.slug) }
-                    )
+                if (uiState.latestSeries.isNotEmpty()) {
+                    item {
+                        val title = stringResource(R.string.on_the_air_series)
+                        TvSwimlaneRow(
+                            title = title,
+                            items = uiState.latestSeries,
+                            onSeeMoreClick = onNavigateToCategory?.let { nav ->
+                                { nav(title, "tv_series", "sort", "createdAt") }
+                            },
+                            onItemClick = { onNavigateToDetail(it.contentType, it.slug) }
+                        )
+                    }
                 }
 
                 // Swimlane: Serial Drama
-                item {
-                    TvSwimlaneRow(
-                        title = stringResource(R.string.series_drama),
-                        items = uiState.dramaSeries,
-                        onItemClick = { onNavigateToDetail(it.contentType, it.slug) }
-                    )
+                if (uiState.dramaSeries.isNotEmpty()) {
+                    item {
+                        val title = stringResource(R.string.series_drama)
+                        TvSwimlaneRow(
+                            title = title,
+                            items = uiState.dramaSeries,
+                            onSeeMoreClick = onNavigateToCategory?.let { nav ->
+                                { nav(title, "tv_series", "genre", "drama") }
+                            },
+                            onItemClick = { onNavigateToDetail(it.contentType, it.slug) }
+                        )
+                    }
                 }
 
                 // Swimlane: Serial Aksi & Petualangan
-                item {
-                    TvSwimlaneRow(
-                        title = stringResource(R.string.series_action),
-                        items = uiState.actionSeries,
-                        onItemClick = { onNavigateToDetail(it.contentType, it.slug) }
-                    )
+                if (uiState.actionSeries.isNotEmpty()) {
+                    item {
+                        val title = stringResource(R.string.series_action)
+                        TvSwimlaneRow(
+                            title = title,
+                            items = uiState.actionSeries,
+                            onSeeMoreClick = onNavigateToCategory?.let { nav ->
+                                { nav(title, "tv_series", "genre", "action") }
+                            },
+                            onItemClick = { onNavigateToDetail(it.contentType, it.slug) }
+                        )
+                    }
                 }
 
                 // Swimlane: Serial Komedi
-                item {
-                    TvSwimlaneRow(
-                        title = stringResource(R.string.series_comedy),
-                        items = uiState.comedySeries,
-                        onItemClick = { onNavigateToDetail(it.contentType, it.slug) }
-                    )
+                if (uiState.comedySeries.isNotEmpty()) {
+                    item {
+                        val title = stringResource(R.string.series_comedy)
+                        TvSwimlaneRow(
+                            title = title,
+                            items = uiState.comedySeries,
+                            onSeeMoreClick = onNavigateToCategory?.let { nav ->
+                                { nav(title, "tv_series", "genre", "comedy") }
+                            },
+                            onItemClick = { onNavigateToDetail(it.contentType, it.slug) }
+                        )
+                    }
                 }
             }
         }

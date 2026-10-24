@@ -11,6 +11,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.idlix.tv.ui.components.NavItem
 import com.idlix.tv.ui.components.TvNavDrawer
+import com.idlix.tv.ui.screens.category.CategoryScreen
 import com.idlix.tv.ui.screens.detail.DetailScreen
 import com.idlix.tv.ui.screens.history.ContinueWatchingScreen
 import com.idlix.tv.ui.screens.home.HomeScreen
@@ -39,7 +40,7 @@ fun AppNavigation(
         else -> NavItem.HOME
     }
 
-    val isFullScreenRoute = currentRoute.startsWith("player") || currentRoute.startsWith("detail")
+    val isFullScreenRoute = currentRoute.startsWith("player") || currentRoute.startsWith("detail") || currentRoute.startsWith("category")
 
     if (isFullScreenRoute) {
         // Render without side drawer
@@ -109,6 +110,9 @@ private fun androidx.navigation.NavGraphBuilder.setupNavRoutes(
             },
             onNavigateToPlayer = { type, id, title, poster, backdrop, slug ->
                 navController.navigate(Screen.Player.createRoute(type, id, title, poster, backdrop, slug))
+            },
+            onNavigateToCategory = { title, contentType, filterType, filterValue ->
+                navController.navigate(Screen.Category.createRoute(title, contentType, filterType, filterValue))
             }
         )
     }
@@ -133,6 +137,9 @@ private fun androidx.navigation.NavGraphBuilder.setupNavRoutes(
             },
             onNavigateToPlayer = { type, id, title, poster, backdrop, slug ->
                 navController.navigate(Screen.Player.createRoute(type, id, title, poster, backdrop, slug))
+            },
+            onNavigateToCategory = { title, contentType, filterType, filterValue ->
+                navController.navigate(Screen.Category.createRoute(title, contentType, filterType, filterValue))
             }
         )
     }
@@ -144,6 +151,9 @@ private fun androidx.navigation.NavGraphBuilder.setupNavRoutes(
             },
             onNavigateToPlayer = { type, id, title, poster, backdrop, slug ->
                 navController.navigate(Screen.Player.createRoute(type, id, title, poster, backdrop, slug))
+            },
+            onNavigateToCategory = { title, contentType, filterType, filterValue ->
+                navController.navigate(Screen.Category.createRoute(title, contentType, filterType, filterValue))
             }
         )
     }
@@ -158,6 +168,36 @@ private fun androidx.navigation.NavGraphBuilder.setupNavRoutes(
 
     composable(Screen.Settings.route) {
         SettingsScreen()
+    }
+
+    composable(
+        route = Screen.Category.route,
+        arguments = listOf(
+            navArgument("title") { type = NavType.StringType },
+            navArgument("contentType") { type = NavType.StringType },
+            navArgument("filterType") { type = NavType.StringType },
+            navArgument("filterValue") { type = NavType.StringType }
+        )
+    ) { backStackEntry ->
+        val rawTitle = backStackEntry.arguments?.getString("title") ?: ""
+        val title = URLDecoder.decode(rawTitle, StandardCharsets.UTF_8.toString())
+        val contentType = backStackEntry.arguments?.getString("contentType") ?: "movie"
+        val filterType = backStackEntry.arguments?.getString("filterType") ?: "sort"
+        val rawValue = backStackEntry.arguments?.getString("filterValue") ?: "all"
+        val filterValue = if (rawValue == "all") "" else URLDecoder.decode(rawValue, StandardCharsets.UTF_8.toString())
+
+        CategoryScreen(
+            title = title,
+            contentType = contentType,
+            filterType = filterType,
+            filterValue = filterValue,
+            onNavigateToDetail = { type, slug ->
+                navController.navigate(Screen.Detail.createRoute(type, slug))
+            },
+            onBack = {
+                navController.popBackStack()
+            }
+        )
     }
 
     composable(

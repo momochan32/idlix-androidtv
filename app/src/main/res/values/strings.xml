@@ -96,4 +96,12 @@
     <string name="play_next_episode">Play Next</string>
     <string name="next_episode_in_seconds">Auto-playing in %ds</string>
     <string name="dismiss">Dismiss</string>
+    <string name="see_more">See More</string>
+    <string name="see_all">See All</string>
+    <string name="movies_animation">Animated Movies &amp; Anime</string>
+    <string name="movies_romance">Romance &amp; Drama Movies</string>
+    <string name="latest_series">Recently Released TV Series</string>
+    <string name="category_titles_count">%d titles</string>
+    <string name="load_more">Load More</string>
+    <string name="loading_more">Loading more titles…</string>
 </resources>
